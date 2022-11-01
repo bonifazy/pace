@@ -1,6 +1,5 @@
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from datetime import date
 import logging
@@ -20,41 +19,35 @@ logging.basicConfig(filename=LOG_FILE,
                     format='%(asctime)s: %(name)s: %(levelname)s: %(message)s')
 log = logging.getLogger('Bot')
 
-
-digital_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-digital_keyboard.row('1', '2', '3')
-digital_keyboard.row('4', '5', '6')
-digital_keyboard.row('7', '8', '9')
-digital_keyboard.row(' ', '0', ' ')
-digital_keyboard.row('Назад')
-
-finish_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-finish_keyboard.row('Интервальная', 'Длительная')
-finish_keyboard.row('Назад')
+digital_keyboard = types.InlineKeyboardMarkup()
+digit_1 = types.InlineKeyboardButton(text='1', callback_data='digit_1')
+digit_2 = types.InlineKeyboardButton(text='2', callback_data='digit_2')
+digit_3 = types.InlineKeyboardButton(text='3', callback_data='digit_3')
+digit_4 = types.InlineKeyboardButton(text='4', callback_data='digit_4')
+digit_5 = types.InlineKeyboardButton(text='5', callback_data='digit_5')
+digit_6 = types.InlineKeyboardButton(text='6', callback_data='digit_6')
+digit_7 = types.InlineKeyboardButton(text='7', callback_data='digit_7')
+digit_8 = types.InlineKeyboardButton(text='8', callback_data='digit_8')
+digit_9 = types.InlineKeyboardButton(text='9', callback_data='digit_9')
+digit_0 = types.InlineKeyboardButton(text='0', callback_data='digit_0')
+digit_dummy = types.InlineKeyboardButton(text=' ', callback_data='digit_dummy_')
+digital_keyboard.row(digit_1, digit_2, digit_3)
+digital_keyboard.row(digit_4, digit_5, digit_6)
+digital_keyboard.row(digit_7, digit_8, digit_9)
+digital_keyboard.row(digit_dummy, digit_0, digit_dummy)
 
 
 class Pace(StatesGroup):
-    """
-    Enter digits for 1km pace
-    format, example:
-    3:45 min/km is:
-    minutes = 3
-    dec_seconds = 4
-    seconds = 5
-    total-- is final state gives individual menu and handler
-    interval-- state for /pace menu handler
-    long-- state for /long menu handler
-    """
-    minutes = State()
-    dec_seconds = State()
-    seconds = State()
-    total = State()
+    wait_digit = State()
+    first_digit = State()
+    second_digit = State()
+    third_digit = State()
     interval = State()
     long = State()
 
 
 @dp.message_handler(IsUserPersonal(), commands=['start'], state='*')
-async def start(msg: types.Message, state: FSMContext):
+async def start(msg: types.Message):
 
     user_id = msg.from_user.id
     first_name = msg.from_user.first_name
@@ -87,8 +80,8 @@ async def pace(msg: types.Message, state: FSMContext):
     await state.finish()
     await state.update_data(interval=True)
     await state.update_data(long=None)
-    await Pace.first()
-    await bot.send_message(user_id, text=MESSAGE['pace'], reply_markup=digital_keyboard)
+    await Pace.wait_digit.set()
+    await bot.send_message(user_id, text=MESSAGE['clear_pace'], reply_markup=digital_keyboard)
 
     log.info(f'{first_name} push /pace button.')
 
@@ -109,15 +102,15 @@ async def long(msg: types.Message, state: FSMContext):
     await state.finish()
     await state.update_data(long=True)
     await state.update_data(interval=None)
-    await Pace.first()
+    await Pace.wait_digit.set()
 
-    await bot.send_message(user_id, text=MESSAGE['pace'], reply_markup=digital_keyboard)
+    await bot.send_message(user_id, text=MESSAGE['clear_pace'], reply_markup=digital_keyboard)
 
     log.info(f'{first_name} push /long button.')
 
 
 @dp.message_handler(IsUserPersonal(), commands=['help'], state='*')
-async def help_any_state(msg: types.Message, state: FSMContext):
+async def user_help(msg: types.Message):
 
     user_id = msg.from_user.id
     first_name = msg.from_user.first_name
@@ -126,147 +119,86 @@ async def help_any_state(msg: types.Message, state: FSMContext):
     log.info(f'{first_name} push /help button.')
 
 
-@dp.message_handler(IsUserPersonal(), Text(equals='Интервальная'), state='*')
-async def pace_form_total_interval_without_state(msg: types.Message, state: FSMContext):
+@dp.callback_query_handler(lambda call: call.data[-1].isdigit(), state=Pace.wait_digit)
+async def callback_pace_from_inline_keyboard(call: types.CallbackQuery, state: FSMContext):
 
-    return await pace(msg=msg, state=state)
+    user_id = call.from_user.id
+    wait_digit = int(call.data[-1])
+
+    async with state.proxy() as data:
+        first_digit = data.get('first_digit')
+        second_digit = data.get('second_digit')
+        third_digit = data.get('third_digit')
+
+    if first_digit is None and second_digit is None and third_digit is None:
+
+        # minutes: correct value from 2:00 to 9:59 min/ km.
+        if not wait_digit == 0 and not wait_digit == 1:
+            await state.update_data(first_digit=wait_digit)
+            pace = f'{wait_digit}:xx'
+            await Pace.wait_digit.set()
+            await bot.edit_message_text(text=f'Ваш темп: {pace} мин/ км. \n'
+                                             f'Введите темп тремя цифрами:',
+                                        chat_id=user_id,
+                                        message_id=call.message.message_id,
+                                        reply_markup=digital_keyboard)
+        else:
+            # bad minutes value: from 0:00 min/ km to 2:00 min/ km
+            await Pace.wait_digit.set()
+            await bot.edit_message_text(text=f'Ошибка ввода минут! \n'
+                                             f'Принимается темп от 2:00мин/ км. до 9:59мин/ км. \n'
+                                             f'Введите минуты от 2 до 9:', chat_id=user_id,
+                                        message_id=call.message.message_id,
+                                        reply_markup=digital_keyboard)
+
+    elif first_digit is not None and second_digit is None and third_digit is None:
+
+        # dec seconds: correct value from 00 to 59 sec.
+        if wait_digit < 6:
+            await state.update_data(second_digit=wait_digit)
+            pace = f'{first_digit}:{wait_digit}x'
+            await Pace.wait_digit.set()
+            await bot.edit_message_text(text=f'Ваш темп: {pace} мин/ км. \n'
+                                             f'Введите темп тремя цифрами:',
+                                        chat_id=user_id,
+                                        message_id=call.message.message_id,
+                                        reply_markup=digital_keyboard)
+        else:
+            # bad dec_seconds value: from x:60 to x:99 seconds
+            await Pace.wait_digit.set()
+            await bot.edit_message_text(text=f'Ошибка ввода десятков секунд! \n'
+                                             f'Принимается темп от {first_digit}:00мин/ км. до '
+                                             f'{first_digit}:59мин/ км. \n'
+                                             f'Введите десятки секунд от от 0 до 5:', chat_id=user_id,
+                                        message_id=call.message.message_id,
+                                        reply_markup=digital_keyboard)
+
+    elif first_digit is not None and second_digit is not None and third_digit is None:
+
+        # seconds: correct value
+        await state.update_data(third_digit=wait_digit)
+        pace = f'{first_digit}:{second_digit}{wait_digit}'
+        await state.reset_state(with_data=False)
+        sec_pace = first_digit * 60 + second_digit * 10 + wait_digit
+        await bot.edit_message_text(text=f'Ваш темп: {pace} мин/ км. \n'
+                                         f'Введите темп тремя цифрами:',
+                                    chat_id=user_id,
+                                    message_id=call.message.message_id,
+                                    reply_markup=digital_keyboard)
+        # final calculation
+        await final_calculation(user_id=user_id, pace=sec_pace, state=state)
 
 
-@dp.message_handler(IsUserPersonal(), Text(equals='Длительная'), state='*')
-async def pace_form_total_long_without_state(msg: types.Message, state: FSMContext):
+async def final_calculation(user_id: int, pace: int, state: FSMContext):
 
-    return await long(msg=msg, state=state)
+    result_charts = ''
 
-
-@dp.message_handler(IsUserPersonal(), Text(equals='Назад'), state='*')
-async def cancel_pace_form(message: types.Message, state: FSMContext):
-
-    current_state = await state.get_state()
-    if current_state is None:
-        return
-    # clear all enter digits state
-    await state.finish()
-    await message.reply(text=MESSAGE['cancel_pace_form'], reply_markup=types.ReplyKeyboardRemove())
-
-
-@dp.message_handler(lambda msg: msg.text.isdigit() and 0 < int(msg.text) < 2, state=Pace.minutes)
-async def pace_form_invalid_minutes_0_or_1(msg: types.Message):
-    """
-    Exception: wrong enter minutes, Kipchoge style
-    """
-    return await msg.reply(text=MESSAGE['pace_form_invalid_minutes_0_or_1'])
-
-
-@dp.message_handler(lambda msg: msg.text.isdigit() and 5 < int(msg.text) < 10, state=Pace.dec_seconds)
-async def pace_form_invalid_dec_seconds_5_to_9(msg: types.Message):
-    """
-    Exception: wrong dec seconds, block enter 60- 90 seconds to form.
-    """
-    return await msg.reply(text=MESSAGE['pace_form_invalid_dec_seconds_6_to_9'])
-
-
-@dp.message_handler(lambda msg: msg.text.isdigit() and 229 < int(msg.text) < 960, state=Pace.minutes)
-async def pace_form_system_keyboard(msg: types.Message, state: FSMContext):
-    """
-    good conditions pace from system keyboard 2:30- 9:59 min/km.
-    """
-
-    user_id = msg.from_user.id
-    pace = msg.text
-    await msg.reply(text=f'Темп тренировки: {pace[0]}:{pace[1:]} мин/км.')
-    minutes = pace[0]
-    dec_seconds = pace[1]
-    seconds = pace[2]
-    pace1k = int(minutes) * 60 + int(dec_seconds) * 10 + int(seconds)
     async with state.proxy() as data:
         interval = data.get('interval')
         long = data.get('long')
-    await state.finish()
-    total = ''
     if interval:
-        total = interval_charts(pace=pace1k)
+        result_charts = interval_charts(pace=pace)
     elif long:
-        total = long_charts(pace=pace1k)
-    await bot.send_message(user_id, text=total, reply_markup=finish_keyboard)
-
-
-@dp.message_handler(lambda msg: not msg.text.isdigit()
-                                and len(msg.text) == 4
-                                and msg.text[1] in [':', ',', '.']
-                                and msg.text[0].isdigit() and msg.text[2:].isdigit(),
-                    state=Pace.minutes)
-async def pace_form_system_keyboard_with_sep(msg: types.Message, state: FSMContext):
-    """
-    Обработка ввода с клавиатуры сразу 3 цифр с разделителем.
-    """
-    user_id = msg.from_user.id
-    pace = msg.text
-
-    await bot.send_message(user_id, text=f'Темп тренировки: {pace[0]}:{pace[2:]} мин/км.',
-                           reply_markup=types.ReplyKeyboardRemove())
-    minutes = pace[0]
-    dec_seconds = pace[2]
-    seconds = pace[3]
-    pace1k = int(minutes) * 60 + int(dec_seconds) * 10 + int(seconds)
-    async with state.proxy() as data:
-        interval = data.get('interval')
-        long = data.get('long')
-    await state.finish()
-    total = ''
-    if interval:
-        total = interval_charts(pace=pace1k)
-    elif long:
-        total = long_charts(pace=pace1k)
-    await bot.send_message(user_id, text=total, reply_markup=finish_keyboard)
-
-
-@dp.message_handler(lambda msg: msg.text.isdigit() and 1 < int(msg.text) < 10, state=Pace.minutes)
-async def pace_form_first_digit(msg: types.Message, state: FSMContext):
-    """
-    Обработка первой цифры. Ввод минут, от 2мин до 9мин.
-    """
-    user_id = msg.from_user.id
-    minutes = int(msg.text)
-
-    await state.update_data(minutes=minutes)
-    await Pace.next()
-    await bot.send_message(user_id, text=f'Темп тренировки: {minutes}:xx мин/ км.', reply_markup=digital_keyboard)
-
-
-@dp.message_handler(lambda msg: msg.text.isdigit() and int(msg.text) < 6, state=Pace.dec_seconds)
-async def pace_form_second_digit(msg: types.Message, state: FSMContext):
-
-    user_id = msg.from_user.id
-    dec_seconds = int(msg.text)
-
-    await state.update_data(dec_seconds=dec_seconds)
-    async with state.proxy() as data:
-        minutes = data.get('minutes')
-    await Pace.next()
-    await bot.send_message(user_id, text=f'Темп тренировки: {minutes}:{dec_seconds}x мин/ км.',
-                           reply_markup=digital_keyboard)
-
-
-@dp.message_handler(lambda msg: msg.text.isdigit() and int(msg.text) < 10, state=Pace.seconds)
-async def pace_form_third_digit(msg: types.Message, state: FSMContext):
-
-    user_id = msg.from_user.id
-    seconds = int(msg.text)
-
-    await state.update_data(seconds=seconds)
-    async with state.proxy() as data:
-        minutes = data.get('minutes')
-        dec_second = data.get('dec_seconds')
-        interval = data.get('interval')
-        long = data.get('long')
-    await Pace.next()
-
-    await bot.send_message(user_id, text=f'Темп тренировки: {minutes}:{dec_second}{seconds} мин/км.',
-                           reply_markup=types.ReplyKeyboardRemove())
-    pace1k = int(minutes) * 60 + int(dec_second) * 10 + int(seconds)
-    total = ''
-    if interval:
-        total = interval_charts(pace=pace1k)
-    elif long:
-        total = long_charts(pace=pace1k)
-    await bot.send_message(user_id, text=total, reply_markup=finish_keyboard)
+        result_charts = long_charts(pace=pace)
+    await state.reset_state(with_data=True)
+    await bot.send_message(user_id, text=result_charts)
