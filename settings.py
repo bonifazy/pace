@@ -15,7 +15,7 @@ ADMIN_ID = 777
 
 if __name__ == '__main__':
     if not Path(LOG_FILE).is_file():
-        print('LOG_FILE: chech path or file exists.')
+        print('LOG_FILE: check path or file exists.')
     elif not Path(DB).is_file():
         print('USERS_DB: check db exists.')
     else:
