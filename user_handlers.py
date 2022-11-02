@@ -1,15 +1,17 @@
 from aiogram import types
 from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from datetime import date
 import logging
+from asyncio import sleep
 
 from loader import dp, bot
 from db import Users
 from settings import LOG_FILE
 from filters import IsUserPersonal
 from message import MESSAGE
-from user_features import interval_charts, long_charts
+from user_features import interval_charts, tempo_charts, long_charts
 
 
 logging.basicConfig(filename=LOG_FILE,
@@ -43,10 +45,11 @@ class Pace(StatesGroup):
     second_digit = State()
     third_digit = State()
     interval = State()
+    tempo = State()
     long = State()
 
 
-@dp.message_handler(IsUserPersonal(), commands=['start'], state='*')
+@dp.message_handler(IsUserPersonal(), commands=['start'])
 async def start(msg: types.Message):
 
     user_id = msg.from_user.id
@@ -64,7 +67,7 @@ async def start(msg: types.Message):
     log.info(f'{first_name} push /start button.')
 
 
-@dp.message_handler(IsUserPersonal(), commands=['pace'], state='*')
+@dp.message_handler(IsUserPersonal(), commands=['pace'])
 async def pace(msg: types.Message, state: FSMContext):
 
     user_id = msg.from_user.id
@@ -79,14 +82,34 @@ async def pace(msg: types.Message, state: FSMContext):
 
     await state.finish()
     await state.update_data(interval=True)
-    await state.update_data(long=None)
     await Pace.wait_digit.set()
     await bot.send_message(user_id, text=MESSAGE['clear_pace'], reply_markup=digital_keyboard)
 
     log.info(f'{first_name} push /pace button.')
 
 
-@dp.message_handler(IsUserPersonal(), commands=['long'], state='*')
+@dp.message_handler(IsUserPersonal(), commands=['tempo'])
+async def tempo(msg: types.Message, state: FSMContext):
+
+    user_id = msg.from_user.id
+    first_name = msg.from_user.first_name
+    user_name = msg.from_user.username
+    today = date.today().strftime('%Y-%m-%d')
+    info = (first_name, user_name, today)
+
+    # new user to db or update user info: username and login date
+    with Users() as users:
+        users[user_id] = info
+
+    await state.finish()
+    await state.update_data(tempo=True)
+    await Pace.wait_digit.set()
+    await bot.send_message(user_id, text=MESSAGE['clear_pace'], reply_markup=digital_keyboard)
+
+    log.info(f'{first_name} push /tempo button.')
+
+
+@dp.message_handler(IsUserPersonal(), commands=['long'])
 async def long(msg: types.Message, state: FSMContext):
 
     user_id = msg.from_user.id
@@ -101,7 +124,6 @@ async def long(msg: types.Message, state: FSMContext):
 
     await state.finish()
     await state.update_data(long=True)
-    await state.update_data(interval=None)
     await Pace.wait_digit.set()
 
     await bot.send_message(user_id, text=MESSAGE['clear_pace'], reply_markup=digital_keyboard)
@@ -109,7 +131,7 @@ async def long(msg: types.Message, state: FSMContext):
     log.info(f'{first_name} push /long button.')
 
 
-@dp.message_handler(IsUserPersonal(), commands=['help'], state='*')
+@dp.message_handler(IsUserPersonal(), commands=['help'])
 async def user_help(msg: types.Message):
 
     user_id = msg.from_user.id
@@ -117,6 +139,23 @@ async def user_help(msg: types.Message):
 
     await bot.send_message(user_id, text=MESSAGE['help'])
     log.info(f'{first_name} push /help button.')
+
+
+@dp.message_handler(IsUserPersonal(), commands=['start', 'pace', 'tempo', 'long', 'help'], state=Pace.wait_digit)
+async def callback_cancelled_enter_digits(msg: types.Message, state: FSMContext):
+
+    await state.reset_state(with_data=True)
+
+    if msg.text == '/start':
+        await start(msg=msg)
+    elif msg.text == '/pace':
+        await pace(msg=msg, state=state)
+    elif msg.text == '/tempo':
+        await tempo(msg=msg, state=state)
+    elif msg.text == '/long':
+        await long(msg=msg, state=state)
+    elif msg.text == '/help':
+        await user_help(msg=msg)
 
 
 @dp.callback_query_handler(lambda call: call.data[-1].isdigit(), state=Pace.wait_digit)
@@ -188,6 +227,8 @@ async def callback_pace_from_inline_keyboard(call: types.CallbackQuery, state: F
         # final calculation
         await final_calculation(user_id=user_id, pace=sec_pace, state=state)
 
+    await bot.answer_callback_query(call.id)
+
 
 async def final_calculation(user_id: int, pace: int, state: FSMContext):
 
@@ -195,10 +236,15 @@ async def final_calculation(user_id: int, pace: int, state: FSMContext):
 
     async with state.proxy() as data:
         interval = data.get('interval')
+        tempo = data.get('tempo')
         long = data.get('long')
     if interval:
         result_charts = interval_charts(pace=pace)
+    elif tempo:
+        result_charts = tempo_charts(pace=pace)
     elif long:
         result_charts = long_charts(pace=pace)
     await state.reset_state(with_data=True)
     await bot.send_message(user_id, text=result_charts)
+    await sleep(5)
+    await bot.send_message(user_id, text=MESSAGE['next_step'])

@@ -2,7 +2,7 @@
 def interval_charts(pace: int) -> str:
     """
     Takes pace in sec per 1km.
-    Return interval distance charts by txt lines.
+    Returns interval distance charts by txt lines.
     """
 
     def to_time(sec: int) -> str:
@@ -25,7 +25,8 @@ def interval_charts(pace: int) -> str:
     pace1600m = to_time(round(pace * 1.6))
     pace2km = to_time(pace * 2)
     pace3km = to_time(pace * 3)
-    interval_workout = f'Раскладка на интервальную тренировку: \n\n' \
+    interval_workout = f'Темп: {pace1km} мин/ км. \n\n' \
+                       f'Раскладка на интервальную тренировку: \n\n' \
                        f'100м: {pace100m} сек.\n' \
                        f'200м: {pace200m} \n' \
                        f'400м: {pace400m} \n' \
@@ -40,13 +41,12 @@ def interval_charts(pace: int) -> str:
     return interval_workout
 
 
-# feature to /long button
-def long_charts(pace: int) -> str:
+# feature to /tempo button
+def tempo_charts(pace: int) -> str:
     """
     Takes pace in sec per 1km.
-    Return long distance charts by txt lines.
+    Returns tempo distance charts by txt lines.
     """
-
     def to_time(sec: int) -> str:
         if sec > 3600:
             hours = int(sec / 3600)
@@ -71,24 +71,67 @@ def long_charts(pace: int) -> str:
     pace8km = to_time(pace * 8)
     pace9km = to_time(pace * 9)
     pace10km = to_time(pace * 10)
+    pace11km = to_time(pace * 11)
+    pace12km = to_time(pace * 12)
+    pace13km = to_time(pace * 13)
+    pace14km = to_time(pace * 14)
+    pace15km = to_time(pace * 15)
+    tempo_workout = f'Темп: {pace1km} мин/ км. \n\n' \
+                    f'Раскладка на темповую тренировку: \n\n' \
+                    f'1км: {pace1km} \n' \
+                    f'2км: {pace2km} \n' \
+                    f'3км: {pace3km} \n' \
+                    f'4км: {pace4km} \n' \
+                    f'5км: {pace5km} \n' \
+                    f'6км: {pace6km} \n' \
+                    f'7км: {pace7km} \n' \
+                    f'8км: {pace8km} \n' \
+                    f'9км: {pace9km} \n' \
+                    f'10км: {pace10km} \n' \
+                    f'11км: {pace11km} \n' \
+                    f'12км: {pace12km} \n' \
+                    f'13км: {pace13km} \n' \
+                    f'14км: {pace14km} \n' \
+                    f'15км: {pace15km} \n\n' \
+                    f't.me/my_pace_bot'
+    return tempo_workout
+
+
+# feature to /long button
+def long_charts(pace: int) -> str:
+    """
+    Takes pace in sec per 1km.
+    Returns long distance charts by txt lines.
+    """
+
+    def to_time(sec: int) -> str:
+        if sec > 3600:
+            hours = int(sec / 3600)
+            minutes = int((sec - hours * 3600) / 60)
+            seconds = sec - hours * 3600 - minutes * 60
+            minutes = '0' + str(minutes) if minutes < 10 else str(minutes)
+            seconds = '0' + str(seconds) if seconds < 10 else str(seconds)
+            return f'{hours}:{minutes}:{seconds} час.'
+        else:
+            minutes = int(sec / 60)
+            seconds = sec - minutes * 60
+            seconds = '0' + str(seconds) if seconds < 10 else str(seconds)
+            return f'{minutes}:{seconds} мин.'
+
+    pace1km = to_time(pace)
+    pace5km = to_time(pace * 5)
+    pace10km = to_time(pace * 10)
     pace15km = to_time(pace * 15)
     pace20km = to_time(pace * 20)
     pace25km = to_time(pace * 25)
     pace30km = to_time(pace * 30)
-    long_workout = f'Раскладка на длительную тренировку: \n\n' \
-                       f'1км: {pace1km} \n' \
-                       f'2км: {pace2km} \n' \
-                       f'3км: {pace3km} \n' \
-                       f'4км: {pace4km} \n' \
-                       f'5км: {pace5km} \n' \
-                       f'6км: {pace6km} \n' \
-                       f'7км: {pace7km} \n' \
-                       f'8км: {pace8km} \n' \
-                       f'9км: {pace9km} \n' \
-                       f'10км: {pace10km} \n' \
-                       f'15км: {pace15km} \n' \
-                       f'20км: {pace20km} \n' \
-                       f'25км: {pace25km} \n' \
-                       f'30км: {pace30km} \n\n' \
-                       f't.me/my_pace_bot'
+    long_workout = f'Темп: {pace1km} мин/ км. \n\n' \
+                   f'Раскладка на длительную тренировку: \n\n' \
+                   f'5км: {pace5km} \n' \
+                   f'10км: {pace10km} \n' \
+                   f'15км: {pace15km} \n' \
+                   f'20км: {pace20km} \n' \
+                   f'25км: {pace25km} \n' \
+                   f'30км: {pace30km} \n\n' \
+                   f't.me/my_pace_bot'
     return long_workout

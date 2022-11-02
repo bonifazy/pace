@@ -16,8 +16,8 @@ logging.basicConfig(filename=LOG_FILE,
 log = logging.getLogger('Bot')
 
 
-@dp.message_handler(IsAdminPersonal(), commands=['start', 'admin'])
-async def admin(msg: types.Message):
+@dp.message_handler(IsAdminPersonal(), commands=['start'])
+async def admin_start(msg: types.Message):
 
     user_id = msg.from_user.id
     first_name = msg.from_user.first_name
@@ -32,7 +32,7 @@ async def admin(msg: types.Message):
     with Users() as users:
         users[user_id] = info
 
-    log.info(f'{first_name} push /start or /admin button.')
+    log.info(f'{first_name} push /start button.')
 
 
 @dp.message_handler(IsAdminPersonal(), commands=['users'])
