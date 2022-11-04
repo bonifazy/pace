@@ -1,6 +1,5 @@
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from datetime import date
 import logging
@@ -11,7 +10,7 @@ from db import Users
 from settings import LOG_FILE
 from filters import IsUserPersonal
 from message import MESSAGE
-from user_features import interval_charts, tempo_charts, long_charts
+from user_features import Chart
 
 
 logging.basicConfig(filename=LOG_FILE,
@@ -171,8 +170,16 @@ async def callback_pace_from_inline_keyboard(call: types.CallbackQuery, state: F
 
     if first_digit is None and second_digit is None and third_digit is None:
 
-        # minutes: correct value from 2:00 to 9:59 min/ km.
-        if not wait_digit == 0 and not wait_digit == 1:
+        if wait_digit == 0 or wait_digit == 1:
+            # bad minutes value: from 0:00 min/ km to 2:00 min/ km
+            await Pace.wait_digit.set()
+            await bot.edit_message_text(text=f'Ошибка ввода минут! \n'
+                                             f'Принимается темп от 2:00мин/ км. до 9:59мин/ км. \n'
+                                             f'Введите минуты от 2 до 9:', chat_id=user_id,
+                                        message_id=call.message.message_id,
+                                        reply_markup=digital_keyboard)
+        else:
+            # minutes: correct value from 2:00 to 9:59 min/ km.
             await state.update_data(first_digit=wait_digit)
             pace = f'{wait_digit}:xx'
             await Pace.wait_digit.set()
@@ -181,14 +188,7 @@ async def callback_pace_from_inline_keyboard(call: types.CallbackQuery, state: F
                                         chat_id=user_id,
                                         message_id=call.message.message_id,
                                         reply_markup=digital_keyboard)
-        else:
-            # bad minutes value: from 0:00 min/ km to 2:00 min/ km
-            await Pace.wait_digit.set()
-            await bot.edit_message_text(text=f'Ошибка ввода минут! \n'
-                                             f'Принимается темп от 2:00мин/ км. до 9:59мин/ км. \n'
-                                             f'Введите минуты от 2 до 9:', chat_id=user_id,
-                                        message_id=call.message.message_id,
-                                        reply_markup=digital_keyboard)
+
 
     elif first_digit is not None and second_digit is None and third_digit is None:
 
@@ -232,18 +232,16 @@ async def callback_pace_from_inline_keyboard(call: types.CallbackQuery, state: F
 
 async def final_calculation(user_id: int, pace: int, state: FSMContext):
 
+    chart = Chart(pace=pace)
     result_charts = ''
 
     async with state.proxy() as data:
-        interval = data.get('interval')
-        tempo = data.get('tempo')
-        long = data.get('long')
-    if interval:
-        result_charts = interval_charts(pace=pace)
-    elif tempo:
-        result_charts = tempo_charts(pace=pace)
-    elif long:
-        result_charts = long_charts(pace=pace)
+        if data.get('interval'):
+            result_charts = chart.interval
+        elif data.get('tempo'):
+            result_charts = chart.tempo
+        elif data.get('long'):
+            result_charts = chart.long
     await state.reset_state(with_data=True)
     await bot.send_message(user_id, text=result_charts)
     await sleep(5)
