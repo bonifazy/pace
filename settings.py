@@ -1,9 +1,5 @@
-# Run Pace bot
-# settings debug mode
-
 from pathlib import Path
 
-# Test bot
 TOKEN = ""
 
 LOG_FILE = 'bot.log'

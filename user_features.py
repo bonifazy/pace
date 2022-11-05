@@ -1,4 +1,4 @@
-class Chart():
+class Chart:
     def __init__(self, pace: int) -> None:
         """
         Takes pace in sec per 1km.
@@ -18,7 +18,6 @@ class Chart():
             interval_workout += f'{distance}м: {self._target_time(distance / 1000)} \n'
         return interval_workout + '\nt.me/my_pace_bot'
 
-
     # feature to /tempo button
     @property
     def tempo(self) -> str:
@@ -27,7 +26,7 @@ class Chart():
         """
         tempo_workout = f'Темп: {self._target_time(1)} мин/ км. \n\n' \
                         f'Раскладка на темповую тренировку: \n\n'
-        for distance in range(1, 15):
+        for distance in range(1, 16):
             tempo_workout += f'{distance}км: {self._target_time(distance)} \n'
         return tempo_workout + '\nt.me/my_pace_bot'
 
@@ -37,8 +36,7 @@ class Chart():
         """
         Returns long distance charts by txt lines.
         """
-        long_workout = f'Темп: {self._target_time(1)} мин/ км. \n\n' \
-                    f'Раскладка на длительную тренировку: \n\n'
+        long_workout = f'Темп: {self._target_time(1)} мин/ км. \n\nРаскладка на длительную тренировку: \n\n'
         for distance in [5, 10, 15, 20, 25, 30]:
             long_workout += f'{distance}км: {self._target_time(distance)} \n'
         return long_workout + '\nt.me/my_pace_bot'
