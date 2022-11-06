@@ -11,8 +11,7 @@ class Chart:
         """
         Returns interval distance charts by txt lines.
         """
-        interval_workout = f'Темп: {self._target_time(1)} мин/ км. \n\n' \
-                           f'Раскладка на интервальную тренировку: \n\n' \
+        interval_workout = f'*Темп: {self._target_time(1)}/км.*\n\nРаскладка на интервальную тренировку: \n\n' \
                            f'100м: {round(self.__pace * 0.1, 2)} сек.\n'
         for distance in [200, 400, 600, 800, 1000, 1200, 1600, 2000, 3000]:
             interval_workout += f'{distance}м: {self._target_time(distance / 1000)} \n'
@@ -24,8 +23,7 @@ class Chart:
         """
         Returns tempo distance charts by txt lines.
         """
-        tempo_workout = f'Темп: {self._target_time(1)} мин/ км. \n\n' \
-                        f'Раскладка на темповую тренировку: \n\n'
+        tempo_workout = f'*Темп: {self._target_time(1)}/км.*\n\nРаскладка на темповую тренировку: \n\n'
         for distance in range(1, 16):
             tempo_workout += f'{distance}км: {self._target_time(distance)} \n'
         return tempo_workout + '\nt.me/my_pace_bot'
@@ -36,7 +34,7 @@ class Chart:
         """
         Returns long distance charts by txt lines.
         """
-        long_workout = f'Темп: {self._target_time(1)} мин/ км. \n\nРаскладка на длительную тренировку: \n\n'
+        long_workout = f'*Темп: {self._target_time(1)}/км.*\n\nРаскладка на длительную тренировку: \n\n'
         for distance in [5, 10, 15, 20, 25, 30]:
             long_workout += f'{distance}км: {self._target_time(distance)} \n'
         return long_workout + '\nt.me/my_pace_bot'
