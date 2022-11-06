@@ -91,7 +91,7 @@ async def interval(msg: types.Message, state: FSMContext):
     await state.finish()
     await state.update_data(interval=True)
     await Pace.wait_digit.set()
-    await bot.send_message(user_id, text=MESSAGE['new_pace'], reply_markup=digital_keyboard)
+    await bot.send_message(user_id, text=MESSAGE['new_pace'], reply_markup=digital_keyboard, parse_mode='Markdown')
 
     log.info(f'{first_name} push /interval button.')
 
@@ -114,7 +114,7 @@ async def tempo(msg: types.Message, state: FSMContext):
     await state.finish()  # clear any active states before
     await state.update_data(tempo=True)  # set only this distance calculation
     await Pace.wait_digit.set()
-    await bot.send_message(user_id, text=MESSAGE['new_pace'], reply_markup=digital_keyboard)
+    await bot.send_message(user_id, text=MESSAGE['new_pace'], reply_markup=digital_keyboard, parse_mode='Markdown')
 
     log.info(f'{first_name} push /tempo button.')
 
@@ -138,7 +138,7 @@ async def long(msg: types.Message, state: FSMContext):
     await state.update_data(long=True)  # set only this distance calculation
     await Pace.wait_digit.set()
 
-    await bot.send_message(user_id, text=MESSAGE['new_pace'], reply_markup=digital_keyboard)
+    await bot.send_message(user_id, text=MESSAGE['new_pace'], reply_markup=digital_keyboard, parse_mode='Markdown')
 
     log.info(f'{first_name} push /long button.')
 
@@ -196,8 +196,8 @@ async def callback_pace_from_inline_keyboard(call: types.CallbackQuery, state: F
         if wait_digit == 0 or wait_digit == 1:
             await Pace.wait_digit.set()
             await bot.edit_message_text(text=f'Ошибка ввода минут! \n'
-                                             f'Принимается темп от 2:00мин/ км. до 9:59мин/ км. \n'
-                                             f'Введите минуты от 2 до 9:', chat_id=user_id,
+                                             f'Принимается темп от 2:00мин/км. до 9:59мин/км. \n'
+                                             'Введите минуты от 2 до 9:', chat_id=user_id,
                                         message_id=call.message.message_id,
                                         reply_markup=digital_keyboard)
         # minutes: correct value from 2:00 to 9:59 min/ km.
@@ -205,11 +205,12 @@ async def callback_pace_from_inline_keyboard(call: types.CallbackQuery, state: F
             await state.update_data(first_digit=wait_digit)
             pace = f'{wait_digit}:xx'
             await Pace.wait_digit.set()
-            await bot.edit_message_text(text=f'Ваш темп: {pace} мин/ км. \n'
-                                             f'Введите темп тремя цифрами:',
+            await bot.edit_message_text(text=f'Ваш темп: *{pace}* мин/км. \n'
+                                             'Введите темп тремя цифрами:',
                                         chat_id=user_id,
                                         message_id=call.message.message_id,
-                                        reply_markup=digital_keyboard)
+                                        reply_markup=digital_keyboard,
+                                        parse_mode='Markdown')
 
     # get second digit in pace, is ten of seconds of entered pace
     elif first_digit is not None and second_digit is None and third_digit is None:
@@ -219,18 +220,19 @@ async def callback_pace_from_inline_keyboard(call: types.CallbackQuery, state: F
             await state.update_data(second_digit=wait_digit)
             pace = f'{first_digit}:{wait_digit}x'
             await Pace.wait_digit.set()
-            await bot.edit_message_text(text=f'Ваш темп: {pace} мин/ км. \n'
-                                             f'Введите темп тремя цифрами:',
+            await bot.edit_message_text(text=f'Ваш темп: *{pace}* мин/км.\n'
+                                             'Введите темп тремя цифрами:',
                                         chat_id=user_id,
                                         message_id=call.message.message_id,
-                                        reply_markup=digital_keyboard)
+                                        reply_markup=digital_keyboard,
+                                        parse_mode='Markdown')
         # bad ten seconds value: from x:60 to x:99 seconds
         else:
             await Pace.wait_digit.set()
-            await bot.edit_message_text(text=f'Ошибка ввода десятков секунд! \n'
-                                             f'Принимается темп от {first_digit}:00мин/ км. до '
-                                             f'{first_digit}:59мин/ км. \n'
-                                             f'Введите десятки секунд от от 0 до 5:', chat_id=user_id,
+            await bot.edit_message_text(text=f'Ошибка ввода десятков секунд!\n'
+                                             f'Принимается темп от {first_digit}:00мин/км. до '
+                                             f'{first_digit}:59мин/км.\n'
+                                             'Введите десятки секунд от от 0 до 5:', chat_id=user_id,
                                         message_id=call.message.message_id,
                                         reply_markup=digital_keyboard)
 
@@ -243,11 +245,12 @@ async def callback_pace_from_inline_keyboard(call: types.CallbackQuery, state: F
         pace = f'{first_digit}:{second_digit}{wait_digit}'
         await state.reset_state(with_data=False)
         sec_pace = first_digit * 60 + second_digit * 10 + wait_digit
-        await bot.edit_message_text(text=f'Ваш темп: {pace} мин/ км. \n'
-                                         f'Введите темп тремя цифрами:',
+        await bot.edit_message_text(text=f'Ваш темп: *{pace}* мин/км.\n'
+                                         'Введите темп тремя цифрами:',
                                     chat_id=user_id,
                                     message_id=call.message.message_id,
-                                    reply_markup=digital_keyboard)
+                                    reply_markup=digital_keyboard,
+                                    parse_mode='Markdown')
 
         # final feature calculation
         await final_calculation(user_id=user_id, pace=sec_pace, state=state)
@@ -288,5 +291,5 @@ async def final_calculation(user_id: int, pace: int, state: FSMContext):
         elif data.get('long'):
             result_charts = chart.long
     await state.reset_state(with_data=True)
-    await bot.send_message(user_id, text=result_charts)
+    await bot.send_message(user_id, text=result_charts, parse_mode='Markdown')
     await bot.send_message(user_id, text='Новая раскладка:', reply_markup=next_step_keyboard)
