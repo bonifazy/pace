@@ -124,6 +124,16 @@ class Users:
         self.conn.commit()
         return self.cur.fetchone()[0]
 
+    def get_ids(self) -> list:
+        """
+        returns: [(id, name), (id, name)..]
+        """
+        sql = "SELECT id, firstname FROM users;"
+        self.cur.execute(sql)
+        self.conn.commit()
+        ids = [(i[0], i[1]) for i in self.cur.fetchall()]
+        return ids  # [(id, name), (id, name)..]
+
 
 def get_users():
 
@@ -139,7 +149,7 @@ def get_users():
     return text
 
 
-def get_log(lines=30):
+def get_log(lines=25):
 
     with open(LOG_FILE, 'rb') as f:
         total_lines_wanted = lines
@@ -166,6 +176,14 @@ def get_log(lines=30):
     return text_log
 
 
+def get_ids():
+
+    db = Users()
+    ids = db.get_ids()
+
+    return ids
+
+
 if __name__ == '__main__':
 
     # test: write to db new user
@@ -175,4 +193,3 @@ if __name__ == '__main__':
     # test: get all users
     print(get_users())
     print(get_log())
-
