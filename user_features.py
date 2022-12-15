@@ -47,31 +47,26 @@ class Chart:
         """
         Returns competitions distance sharts by txt lines.
         """
-        starts_charts = f'Раскладка на интервальную тренировку,\nтемп: {self._target_time(1)}/ км, \nдистанция '
+        starts_charts = f'Раскладка на соревнования,\nтемп: {self._target_time(1)}/ км: \n\n'
         if distance_km == 3:
-            starts_charts += '3000 м: \n\n'
             for distance in [200, 400, 800, 1000, 1200, 1600, 2000, 2400, 2800, 3000]:
                 starts_charts += f'{distance}м: {self._target_time(distance * 0.001)} \n'
         elif distance_km == 5:
-            starts_charts += '5000 м: \n\n'
             for distance in [200, 400, 800, 1000, 2000, 2500, 3000, 4000, 5000]:
                 starts_charts += f'{distance}м: {self._target_time(distance * 0.001)} \n'
         elif distance_km == 10:
-            starts_charts += '10 км: \n\n'
             for distance in [0.2, 0.4, 0.8, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
                 if distance < 1:
                     starts_charts += f'{int(distance * 1000)}м: {self._target_time(distance)} \n'
                 else:
                     starts_charts += f'{distance}км: {self._target_time(distance)} \n'
         elif distance_km == 21:
-            starts_charts += 'Полумарафон, 21.1 км: \n\n'
             for distance in [5, 10, 10.55, 15, 20, 21.1]:
                 if distance == 10.55:
                     starts_charts += f'{distance}0м: {self._target_time(distance)} (середина) \n'
                 else:
                     starts_charts += f'{distance}км: {self._target_time(distance)} \n'
         elif distance_km == 42:
-            starts_charts += 'Марафон, 42.2 км: \n\n'
             for distance in [5, 10, 15, 20, 21.1, 25, 30, 35, 40, 42.2]:
                 starts_charts += f'{distance}км: {self._target_time(distance)} \n'
 
@@ -81,10 +76,11 @@ class Chart:
         """
         Returns distance charts and convert time to pace min/ km.
         """
-        result = ''
 
-        if self.correct_pace == False:
+        if not self.correct_pace:
             return None
+
+        result = 'Раскладка, основные отрезки: \n'
 
         if self.__distance == 400:
             result += f'100м: {round(self.__pace * 0.1, 2)} сек\n'
@@ -129,7 +125,7 @@ class Chart:
                 result += f'{lap * 100} м: {self._target_time(lap * 0.1)} \n'
         result += f'\nТемп: {self._target_time()}/ км.'
 
-        return result
+        return result + '\nt.me/my_pace_bot'
 
     @staticmethod
     def _to_time(sec: int) -> str:

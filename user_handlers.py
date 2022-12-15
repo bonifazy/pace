@@ -54,6 +54,44 @@ async def start(msg: types.Message):
     log.info(f'{first_name} push /start button.')
 
 
+@dp.message_handler(IsUserPersonal(), commands=['pace'])
+async def pace(msg: types.Message):
+
+    user_id = msg.from_user.id
+    first_name = msg.from_user.first_name
+    user_name = msg.from_user.username
+    today = date.today().strftime('%Y-%m-%d')
+    info = (first_name, user_name, today)
+
+    # new user to db or update user info: username and login date
+    with Users() as users:
+        users[user_id] = info
+
+    await bot.send_message(user_id, text=MESSAGE['pace'])
+
+    log.info(f'{first_name} push /pace button.')
+
+
+@dp.message_handler(IsUserPersonal(), commands=['distance'])
+async def distance_training(msg: types.Message):
+    """
+    Get competitions distance charts by pace
+    """
+    user_id = msg.from_user.id
+    first_name = msg.from_user.first_name
+    user_name = msg.from_user.username
+    today = date.today().strftime('%Y-%m-%d')
+    info = (first_name, user_name, today)
+
+    # new user to db or update user info: username and login date
+    with Users() as users:
+        users[user_id] = info
+
+    await bot.send_message(user_id, text=MESSAGE['distance'], reply_markup=distance_training_keyboard)
+
+    log.info(f'{first_name} push /distance button.')
+
+
 @dp.message_handler(IsUserPersonal(), commands=['interval'])
 async def interval(msg: types.Message, state: FSMContext):
     """
@@ -69,7 +107,6 @@ async def interval(msg: types.Message, state: FSMContext):
     with Users() as users:
         users[user_id] = info
 
-    await state.finish()
     await state.update_data(interval=True)
     await Pace.wait_pace.set()
     await bot.send_message(user_id, text=MESSAGE['new_pace'], reply_markup=digital_keyboard)
@@ -92,7 +129,6 @@ async def tempo(msg: types.Message, state: FSMContext):
     with Users() as users:
         users[user_id] = info
 
-    await state.finish()  # clear any active states before
     await state.update_data(tempo=True)  # set only this distance calculation
     await Pace.wait_pace.set()
     await bot.send_message(user_id, text=MESSAGE['new_pace'], reply_markup=digital_keyboard)
@@ -115,7 +151,6 @@ async def long(msg: types.Message, state: FSMContext):
     with Users() as users:
         users[user_id] = info
 
-    await state.finish()  # clear any active states before
     await state.update_data(long=True)  # set only this distance calculation
     await Pace.wait_pace.set()
 
@@ -125,7 +160,7 @@ async def long(msg: types.Message, state: FSMContext):
 
 
 @dp.message_handler(IsUserPersonal(), commands=['competitions'])
-async def competitions(msg: types.Message, state: FSMContext):
+async def competitions(msg: types.Message):
     """
     Get competitions distance charts by pace
     """
@@ -139,31 +174,9 @@ async def competitions(msg: types.Message, state: FSMContext):
     with Users() as users:
         users[user_id] = info
 
-    await state.finish()
     await bot.send_message(user_id, text=MESSAGE['competitions'], reply_markup=competitions_keyboard)
 
     log.info(f'{first_name} push /competitions button.')
-
-
-@dp.message_handler(IsUserPersonal(), commands=['distance'])
-async def distance_training(msg: types.Message, state: FSMContext):
-    """
-    Get competitions distance charts by pace
-    """
-    user_id = msg.from_user.id
-    first_name = msg.from_user.first_name
-    user_name = msg.from_user.username
-    today = date.today().strftime('%Y-%m-%d')
-    info = (first_name, user_name, today)
-
-    # new user to db or update user info: username and login date
-    with Users() as users:
-        users[user_id] = info
-
-    await state.finish()
-    await bot.send_message(user_id, text=MESSAGE['distance_training'], reply_markup=distance_training_keyboard)
-
-    log.info(f'{first_name} push /distance button.')
 
 
 @dp.message_handler(IsUserPersonal(), commands=['help'])
@@ -179,7 +192,7 @@ async def user_help(msg: types.Message):
 
 
 @dp.message_handler(IsUserPersonal(),
-                    commands=['start', 'interval', 'tempo', 'long', 'competitions', 'distance', 'help'],
+                    commands=['start', 'pace', 'distance', 'interval', 'tempo', 'long', 'competitions', 'help'],
                     state='*'
                     )
 async def callback_cancelled_enter_digits(msg: types.Message, state: FSMContext):
@@ -192,14 +205,18 @@ async def callback_cancelled_enter_digits(msg: types.Message, state: FSMContext)
 
     if msg.text == '/start':
         await start(msg=msg)
+    elif msg.text == '/pace':
+        await pace(msg=msg)
+    elif msg.text == '/distance':
+        await distance_training(msg=msg)
     elif msg.text == '/interval':
         await interval(msg=msg, state=state)
     elif msg.text == '/tempo':
         await tempo(msg=msg, state=state)
     elif msg.text == '/long':
         await long(msg=msg, state=state)
-    elif msg.text == '/distance':
-        await distance_training(msg=msg, state=state)
+    elif msg.text == '/competitions':
+        await competitions(msg=msg)
     elif msg.text == '/help':
         await user_help(msg=msg)
 
@@ -232,9 +249,9 @@ async def callback_pace_from_inline_keyboard(call: types.CallbackQuery, state: F
         # minutes: correct value from 2:00 to 9:59 min/ km.
         else:
             await state.update_data(first_digit=wait_digit)
-            pace = f'{wait_digit}:xx'
+            current_pace = f'{wait_digit}:xx'
             await Pace.wait_pace.set()
-            await bot.edit_message_text(text=f'Введите темп тремя цифрами: \n{pace} мин/ км.',
+            await bot.edit_message_text(text=f'Введите темп тремя цифрами: \n{current_pace} мин/ км.',
                                         chat_id=user_id,
                                         message_id=message_id,
                                         reply_markup=digital_keyboard)
@@ -244,9 +261,9 @@ async def callback_pace_from_inline_keyboard(call: types.CallbackQuery, state: F
         # ten of seconds: correct value from 00 to 59 sec.
         if wait_digit < 6:
             await state.update_data(second_digit=wait_digit)
-            pace = f'{first_digit}:{wait_digit}x'
+            current_pace = f'{first_digit}:{wait_digit}x'
             await Pace.wait_pace.set()
-            await bot.edit_message_text(text=f'Введите темп тремя цифрами: \n{pace} мин/ км. \n',
+            await bot.edit_message_text(text=f'Введите темп тремя цифрами: \n{current_pace} мин/ км. \n',
                                         chat_id=user_id,
                                         message_id=message_id,
                                         reply_markup=digital_keyboard)
@@ -263,13 +280,11 @@ async def callback_pace_from_inline_keyboard(call: types.CallbackQuery, state: F
     # get third digit in pace, is seconds
     # if ok, then calculate all entered values by final_calculation function
     elif third_digit is None:
-        # seconds: any digit is correct value
-        pace = f'{first_digit}:{second_digit}{wait_digit}'
         await state.reset_state(with_data=False)
         total_pace = first_digit * 60 + second_digit * 10 + wait_digit
 
         # final feature calculation
-        await final_calculation(user_id=user_id, message_id=message_id, pace=total_pace, state=state)
+        await final_calculation(user_id=user_id, message_id=message_id, total_pace=total_pace, state=state)
 
     # send to Telegram correct work with callback handler
     await bot.answer_callback_query(call.id)
@@ -293,40 +308,53 @@ async def callback_time_from_inline_keyboard(call: types.CallbackQuery, state: F
     if first_digit is None:
         if digit in (0, 1, 2):
             await state.update_data(first_digit=digit)
-            await Pace.wait_time.set()
-            await bot.edit_message_text(text=f'Время на отрезке: \n{digit}x:xx мин.\n',
+            text = MESSAGE['distance_enter_time'] + f'\n{digit}x: xx мин.\n'
+            await bot.edit_message_text(text=text,
                                         chat_id=user_id,
                                         message_id=call.message.message_id,
                                         reply_markup=digital_keyboard)
-        # bad minutes value: from 30:00min or more, very slow runners
+        # bad minutes value or pass first zero digit
         else:
-            await Pace.wait_time.set()
-            await bot.edit_message_text(text=f'Ошибка ввода минут! \n'
-                                             f'На любых отрезках от 400м до 3000м принимается время от 00:50 до 29:59 мин.\n'
-                                             f'Введите цифру минут от 0 до 2: \nxx:xx мин.', chat_id=user_id,
+            await state.update_data(first_digit=0)
+            await state.update_data(second_digit=digit)
+            text = MESSAGE['distance_enter_time'] + f'\n{0}{digit}: xx мин.'
+            await bot.edit_message_text(text=text,
+                                        chat_id=user_id,
                                         message_id=call.message.message_id,
                                         reply_markup=digital_keyboard)
     elif second_digit is None:
         await state.update_data(second_digit=digit)
-        await Pace.wait_time.set()
-        await bot.edit_message_text(text=f'Время на отрезке: \n{first_digit}{digit}:xx мин.\n',
+        text = MESSAGE['distance_enter_time'] + f'\n{first_digit}{digit}: xx мин.'
+        await bot.edit_message_text(text=text,
                                     chat_id=user_id,
                                     message_id=call.message.message_id,
                                     reply_markup=digital_keyboard)
     elif third_digit is None:
-        await state.update_data(third_digit=digit)
-        await Pace.wait_time.set()
-        await bot.edit_message_text(text=f'Время на отрезке: \n{first_digit}{second_digit}:{digit}x мин.\n',
-                                    chat_id=user_id,
-                                    message_id=call.message.message_id,
-                                    reply_markup=digital_keyboard)
-    elif first_digit is not None and second_digit is not None and third_digit is not None:
+        if digit in (0, 1, 2, 3, 4, 5):
+            await state.update_data(third_digit=digit)
+            text = MESSAGE['distance_enter_time'] + f'\n{first_digit}{second_digit}: {digit}x мин.'
+            await bot.edit_message_text(text=text,
+                                        chat_id=user_id,
+                                        message_id=call.message.message_id,
+                                        reply_markup=digital_keyboard)
+        else:
+            await bot.edit_message_text(text=MESSAGE['pace_form_invalid_dec_seconds_6_to_9'],
+                                        chat_id=user_id,
+                                        message_id=call.message.message_id,
+                                        reply_markup=digital_keyboard)
+    await Pace.wait_time.set()
+
+    if first_digit is not None and second_digit is not None and third_digit is not None:
         total_time = first_digit * 600 + second_digit * 60 + third_digit * 10 + digit
         await state.reset_state(with_data=False)
-        await bot.edit_message_text(text=f'Время на отрезке: \n{first_digit}{second_digit}:{third_digit}{digit} мин.\n',
+        text = f'Итоговое время: {first_digit}{second_digit}: {third_digit}{digit} мин.'
+        await bot.edit_message_text(text=text,
                                     chat_id=user_id,
                                     message_id=call.message.message_id)
         await distance_calculation(user_id=user_id, distance=distance, total_time=total_time)
+
+    # send to Telegram correct work with callback handler
+    await bot.answer_callback_query(call.id)
 
 
 @dp.callback_query_handler(lambda call: call.data.startswith('menu_'), state='*')
@@ -350,7 +378,10 @@ async def callback_next_step_menu(call: types.CallbackQuery, state: FSMContext):
         await long(msg=call, state=state)
     elif call.data.endswith('competitions'):
         await bot.edit_message_text(chat_id=user_id, message_id=message_id, text='/competitions')
-        await competitions(msg=call, state=state)
+        await competitions(msg=call)
+    elif call.data.endswith('distance'):
+        await bot.edit_message_text(chat_id=user_id, message_id=message_id, text='/distance')
+        await distance_training(msg=call)
 
     # send to Telegram correct work with callback handler
     await bot.answer_callback_query(call.id)
@@ -392,11 +423,11 @@ async def callback_distance_training_choice_menu(call: types.CallbackQuery, stat
         await state.update_data(distance_training=400)
         await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
                                     text='Дистанция: 400 м.')
-    elif call.data.endswith('500m'):
+    elif call.data.endswith('0500m'):
         await state.update_data(distance_training=500)
         await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
                                     text='Дистанция: 500 м.')
-    elif call.data.endswith('600m'):
+    elif call.data.endswith('0600m'):
         await state.update_data(distance_training=600)
         await bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.message_id,
                                     text='Дистанция: 600 м.')
@@ -438,17 +469,18 @@ async def callback_distance_training_choice_menu(call: types.CallbackQuery, stat
                                     text='Дистанция: 5 км.')
 
     await Pace.wait_time.set()
-    await bot.send_message(call.from_user.id, MESSAGE['distance_training_enter_time'], reply_markup=digital_keyboard)
+    text = MESSAGE['distance_enter_time'] + '\nxx мин: xx сек.'
+    await bot.send_message(call.from_user.id, text=text, reply_markup=digital_keyboard)
 
     # send to Telegram correct work with callback handler
     await bot.answer_callback_query(call.id)
 
 
-async def final_calculation(user_id: int, message_id: int, pace: int, state: FSMContext):
+async def final_calculation(user_id: int, message_id: int, total_pace: int, state: FSMContext):
     """
     Calculate distance charts by entered pace
     """
-    chart = Chart(pace=pace)
+    chart = Chart(pace=total_pace)
     result_charts = ''
 
     async with state.proxy() as data:
@@ -476,7 +508,5 @@ async def distance_calculation(user_id: int, distance: int, total_time: int):
     if result is not None:
         await bot.send_message(user_id, text=result)
     else:
-        await bot.send_message(user_id, text='Введён не корректный темп. \n'
-                                             'Время на дистанции принимается из расчета '
-                                             'итогового темпа от 2:15мин/ км. до 9:59мин/ км. \n'
-                                             'Попробуйте ввести время на дистанции точнее 🙂')
+        await bot.send_message(user_id, text=MESSAGE['uncorrect_pace'])
+    await bot.send_message(user_id, text='Новая раскладка:', reply_markup=next_step_keyboard)
