@@ -365,6 +365,7 @@ async def callback_next_step_menu(call: types.CallbackQuery, state: FSMContext):
 
     user_id = call.from_user.id
     message_id = call.message.message_id
+    await state.reset_state(with_data=True)
 
     # if user press footer line buttons
     if call.data.endswith('interval'):
