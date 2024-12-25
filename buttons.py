@@ -22,10 +22,10 @@ next_step_keyboard = types.InlineKeyboardMarkup()
 next_interval = types.InlineKeyboardButton(text='/interval', callback_data='menu_interval')
 next_tempo = types.InlineKeyboardButton(text='/tempo', callback_data='menu_tempo')
 next_long = types.InlineKeyboardButton(text='/long', callback_data='menu_long')
-next_competiotions = types.InlineKeyboardButton(text='/competitions', callback_data='menu_competitions')
+next_competitions = types.InlineKeyboardButton(text='/competitions', callback_data='menu_competitions')
 next_distance = types.InlineKeyboardButton(text='/distance', callback_data='menu_distance')
 next_step_keyboard.row(next_interval, next_tempo, next_long)
-next_step_keyboard.row(next_competiotions, next_distance)
+next_step_keyboard.row(next_competitions, next_distance)
 
 competitions_keyboard = types.InlineKeyboardMarkup()
 competitions_3km = types.InlineKeyboardButton(text='3000 м.', callback_data='competitions_3km')
@@ -65,4 +65,3 @@ second_news_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, selective
 second_news_keyboard.row('Редактировать', 'Отменить')
 second_news_keyboard.row('Тестовая рассылка')
 second_news_keyboard.row('Опубликовать всем')
-

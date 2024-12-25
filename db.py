@@ -1,11 +1,9 @@
-from pathlib import Path
 import sqlite3
-import os.path
 import logging
 
-from settings import ADMIN_ID, DB, LOG_FILE
+from settings import DB_FILE, BOT_LOG
 
-logging.basicConfig(filename=LOG_FILE,
+logging.basicConfig(filename=BOT_LOG,
                     level=logging.INFO,
                     filemode='a',
                     datefmt='%Y-%m-%d, %H:%M',
@@ -42,8 +40,12 @@ class Users:
     def __init__(self):
         # to real path to 'db.sqlite3' file. If database file should be a parent dir,
         # set parent_dir = Path(__file__).resolve().parent.parent
-        parent_dir = Path(__file__).resolve().parent
-        self.db = os.path.join(parent_dir, DB)  # path + file with any OS
+        # parent_dir = Path(__file__).resolve().parent
+        # self.db = os.path.join(parent_dir, DB_FILE)  # path + file with any OS
+        self.db = DB_FILE
+
+        print(self.db)
+
         self.conn = sqlite3.connect(self.db)
         self.cur = self.conn.cursor()
 
@@ -151,7 +153,7 @@ def get_users():
 
 def get_log(lines=25):
 
-    with open(LOG_FILE, 'rb') as f:
+    with open(BOT_LOG, 'rb') as f:
         total_lines_wanted = lines
         block_size = 1024
         f.seek(0, 2)
@@ -187,8 +189,8 @@ def get_ids():
 if __name__ == '__main__':
 
     # test: write to db new user
-    with Users() as db:
-        db[777] = ('Test', 'test_username', '2022-10-29')
+    with Users() as _users:
+        _users[1] = ('Test', 'test_username', '2022-10-29')
     
     # test: get all users
     print(get_users())

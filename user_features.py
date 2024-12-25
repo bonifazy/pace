@@ -45,7 +45,7 @@ class Chart:
     # feature to /competitions button
     def competitions(self, distance_km) -> str:
         """
-        Returns competitions distance sharts by txt lines.
+        Returns competitions distance charts by txt lines.
         """
         starts_charts = f'Раскладка на соревнования,\nтемп: {self._target_time(1)}/ км: \n\n'
         if distance_km == 3:

@@ -6,14 +6,14 @@ import logging
 
 from loader import dp, bot
 from db import Users
-from settings import LOG_FILE
+from settings import BOT_LOG
 from filters import IsUserPersonal
 from message import MESSAGE
 from user_features import Chart
 from buttons import digital_keyboard, next_step_keyboard, competitions_keyboard, distance_training_keyboard
 
 
-logging.basicConfig(filename=LOG_FILE,
+logging.basicConfig(filename=BOT_LOG,
                     level=logging.INFO,
                     filemode='a',
                     datefmt='%Y-%m-%d, %H:%M',
@@ -182,7 +182,7 @@ async def competitions(msg: types.Message):
 @dp.message_handler(IsUserPersonal(), commands=['help'])
 async def user_help(msg: types.Message):
     """
-    Get bot bio and project github and admin link
+    Get bot bio and link to github.com/pace and t.me/{admin_username}
     """
     user_id = msg.from_user.id
     first_name = msg.from_user.first_name
@@ -364,25 +364,26 @@ async def callback_next_step_menu(call: types.CallbackQuery, state: FSMContext):
     """
 
     user_id = call.from_user.id
-    message_id = call.message.message_id
+    msg = call.message
+    message_id = msg.message_id
     await state.reset_state(with_data=True)
 
     # if user press footer line buttons
     if call.data.endswith('interval'):
         await bot.edit_message_text(chat_id=user_id, message_id=message_id, text='/interval')
-        await interval(msg=call, state=state)
+        await interval(msg, state)
     elif call.data.endswith('tempo'):
         await bot.edit_message_text(chat_id=user_id, message_id=message_id, text='/tempo')
-        await tempo(msg=call, state=state)
+        await tempo(msg, state)
     elif call.data.endswith('long'):
         await bot.edit_message_text(chat_id=user_id, message_id=message_id, text='/long')
-        await long(msg=call, state=state)
+        await long(msg, state)
     elif call.data.endswith('competitions'):
         await bot.edit_message_text(chat_id=user_id, message_id=message_id, text='/competitions')
-        await competitions(msg=call)
+        await competitions(msg)
     elif call.data.endswith('distance'):
         await bot.edit_message_text(chat_id=user_id, message_id=message_id, text='/distance')
-        await distance_training(msg=call)
+        await distance_training(msg)
 
     # send to Telegram correct work with callback handler
     await bot.answer_callback_query(call.id)
@@ -391,7 +392,7 @@ async def callback_next_step_menu(call: types.CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(lambda call: call.data.startswith('competitions_'))
 async def callback_competitions_choice_menu(call: types.CallbackQuery, state: FSMContext):
     """
-    competitions distance choice buttons callback handler
+    competitions distance choice by button pressed
     """
     if call.data.endswith('3km'):
         await state.update_data(competitions=3)
@@ -418,7 +419,7 @@ async def callback_competitions_choice_menu(call: types.CallbackQuery, state: FS
 @dp.callback_query_handler(lambda call: call.data.startswith('distance_training_'), state='*')
 async def callback_distance_training_choice_menu(call: types.CallbackQuery, state: FSMContext):
     """
-    competitions distance choice buttons callback handler
+    distance training choice by button pressed
     """
     if call.data.endswith('400m'):
         await state.update_data(distance_training=400)
@@ -509,5 +510,5 @@ async def distance_calculation(user_id: int, distance: int, total_time: int):
     if result is not None:
         await bot.send_message(user_id, text=result)
     else:
-        await bot.send_message(user_id, text=MESSAGE['uncorrect_pace'])
+        await bot.send_message(user_id, text=MESSAGE['incorrect_pace'])
     await bot.send_message(user_id, text='Новая раскладка:', reply_markup=next_step_keyboard)

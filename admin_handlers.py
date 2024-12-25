@@ -8,7 +8,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 
 from loader import dp, bot
 from db import Users, get_log, get_users, get_ids
-from settings import LOG_FILE, TEST_GROUP
+from settings import BOT_LOG, TEST_GROUP
 from filters import IsAdminPersonal
 from buttons import first_news_keyboard, second_news_keyboard
 
@@ -20,7 +20,7 @@ class AdminState(StatesGroup):
     confirm_all = State()
 
 
-logging.basicConfig(filename=LOG_FILE,
+logging.basicConfig(filename=BOT_LOG,
                     level=logging.INFO,
                     filemode='a',
                     datefmt='%Y-%m-%d, %H:%M',
@@ -129,7 +129,7 @@ async def get_second_news(msg: types.Message, state: FSMContext):
             await bot.send_message(user_id, text=first_news)
             await bot.send_message(user_id, text=text)
             await bot.send_message(user_id, text='Проверьте и отправьте рассылку.', reply_markup=second_news_keyboard)
-        # рассылки не найдено. Запросить заново
+        # Рассылка не найдена, запросить заново
         else:
             await AdminState.first_news.set()
             await msg.reply(text='Ошибка! \nПервая часть рассылки не найдена! \n'
@@ -201,7 +201,7 @@ async def send_message(user_id: int, text: str, disable_notification: bool = Fal
         result = 'blocked_by_user'
     except exceptions.ChatNotFound:
         result = 'user_not_found'
-    except exceptions.RetryAfter as e:
+    except exceptions.RetryAfter as _:
         await sleep(3600)
         return await send_message(user_id, text)  # Recursive call
     except exceptions.UserDeactivated:
@@ -216,7 +216,7 @@ async def send_message(user_id: int, text: str, disable_notification: bool = Fal
 
 async def send_news(clients: list, first: str, second: str) -> dict:
     """
-    Send greating text to username and two messages from admin to users
+    Send greeting text to username and two messages from admin to users
     """
 
     report = {
@@ -227,12 +227,12 @@ async def send_news(clients: list, first: str, second: str) -> dict:
         for client in clients:
             client_id, client_name = client
             if client_name is not None and client_id != '':
-                greating = f'Привет, {client_name}! 🙂 '
+                greeting = f'Привет, {client_name}! 🙂 '
             else:
-                greating = f'Привет! 🙂 '
-            result = await send_message(user_id=client_id, text=greating)
+                greeting = f'Привет! 🙂 '
+            result = await send_message(user_id=client_id, text=greeting)
 
-            # Correct greating send. Next send first and seconds messages.
+            # Correct greeting send. Next send first and seconds messages.
             if result == 'success':
                 await sleep(3)
                 await bot.send_message(chat_id=client_id, text=first)
