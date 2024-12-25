@@ -43,9 +43,6 @@ class Users:
         # parent_dir = Path(__file__).resolve().parent
         # self.db = os.path.join(parent_dir, DB_FILE)  # path + file with any OS
         self.db = DB_FILE
-
-        print(self.db)
-
         self.conn = sqlite3.connect(self.db)
         self.cur = self.conn.cursor()
 

@@ -371,19 +371,19 @@ async def callback_next_step_menu(call: types.CallbackQuery, state: FSMContext):
     # if user press footer line buttons
     if call.data.endswith('interval'):
         await bot.edit_message_text(chat_id=user_id, message_id=message_id, text='/interval')
-        await interval(msg, state)
+        await interval(call, state)
     elif call.data.endswith('tempo'):
         await bot.edit_message_text(chat_id=user_id, message_id=message_id, text='/tempo')
-        await tempo(msg, state)
+        await tempo(call, state)
     elif call.data.endswith('long'):
         await bot.edit_message_text(chat_id=user_id, message_id=message_id, text='/long')
-        await long(msg, state)
+        await long(call, state)
     elif call.data.endswith('competitions'):
         await bot.edit_message_text(chat_id=user_id, message_id=message_id, text='/competitions')
-        await competitions(msg)
+        await competitions(call)
     elif call.data.endswith('distance'):
         await bot.edit_message_text(chat_id=user_id, message_id=message_id, text='/distance')
-        await distance_training(msg)
+        await distance_training(call)
 
     # send to Telegram correct work with callback handler
     await bot.answer_callback_query(call.id)

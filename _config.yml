@@ -1,0 +1,24 @@
+# Укажите корректные параметры для запуска, 
+# переименуйте _config.yml -> config.yml для тестового запуска проекта: ./run.sh
+
+# Production mode
+DEBUG: !!bool True
+TOKEN: 1234567890:qwerty
+
+# webhook
+WEBHOOK_HOST: https://www.domain.com
+WEBHOOK_PATH: /pace_webhook/
+WEBHOOK_URL: https://www.domain.com/pace_webhook/
+
+# webserver settings
+WEBAPP_HOST: localhost
+WEBAPP_PORT: !!int 8443
+
+BOT_LOG: 'log/bot.log'
+DB_FILE: '~/pace_sqlite_database/db.sqlite3'
+
+ADMIN_ID: !!int 1
+TEST_GROUP: [
+  [1, 'Test user'], 
+  [ADMIN_ID, 'Администратор']
+]

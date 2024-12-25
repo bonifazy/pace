@@ -23,7 +23,7 @@ MESSAGE = {
             'github проекта: \n'
             'https:// github. com/ bonifazy/ pace \n\n'
             'Разработка бота: \n'
-            't.me/etoSlishkom',
+            't.me/IamBonifazy',
     'cancel_pace_form': 'Ввод темпа отменён. \n'
                         'Новая раскладка: \n'
                         '/interval - интервальная тренировка \n'

@@ -5,7 +5,7 @@ with open('config.yml') as yaml_file:
     data = safe_load(yaml_file)
 
 # Режим разработки: True (Debug mode)/ False (Production mode)
-DEBUG = data.get('DEBUG', False)
+DEBUG = data.get('DEBUG', True)
 
 # Основные настройки логгера
 BOT_LOG = data.get('BOT_LOG', '')
@@ -25,7 +25,7 @@ ADMIN_ID = data.get('ADMIN_ID', 0)
 TEST_GROUP = data.get('TEST_GROUP', list())
 
 # Файл базы данных
-DB_FILE = 'db.sqlite3'
+DB_FILE = data.get('DB_FILE', '')
 
 
 if __name__ == '__main__':
