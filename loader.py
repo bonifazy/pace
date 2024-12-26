@@ -40,7 +40,7 @@ else:
 
 async def on_startup(_):
     if not DEBUG:
-        await bot.set_webhook(WEBHOOK_HOST)
+        await bot.set_webhook('', ip_address=WEBHOOK_HOST)
 
 
 async def on_shutdown(_):
