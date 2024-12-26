@@ -4,7 +4,7 @@ from aiogram.dispatcher import Dispatcher
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from redis import Redis
 from pytz import timezone
-from settings import DEBUG, TOKEN, BOT_LOG, LOG_FORMAT, LOG_DATEFMT, WEBHOOK_URL
+from settings import DEBUG, TOKEN, BOT_LOG, LOG_FORMAT, LOG_DATEFMT, WEBHOOK_HOST
 import filters
 from db import Users
 
@@ -40,7 +40,7 @@ else:
 
 async def on_startup(_):
     if not DEBUG:
-        await bot.set_webhook(WEBHOOK_URL)
+        await bot.set_webhook(WEBHOOK_HOST)
 
 
 async def on_shutdown(_):

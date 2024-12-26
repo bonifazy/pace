@@ -360,6 +360,10 @@ async def callback_competitions_choice_menu(call: CallbackQuery, state: FSMConte
     """
 
     user_id = call.from_user.id
+    # Clear prev setup total time by each digit
+    await state.update_data(first_digit=None)
+    await state.update_data(second_digit=None)
+    await state.update_data(third_digit=None)
 
     if call.data.endswith('3km'):
         await state.update_data(competitions=3)
