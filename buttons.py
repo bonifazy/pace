@@ -47,14 +47,14 @@ distance_training_1500m = types.InlineKeyboardButton(text='1500 м.', callback_d
 distance_training_1600m = types.InlineKeyboardButton(text='1600 м.', callback_data='distance_training_1600m')
 distance_training_2km = types.InlineKeyboardButton(text='2 км.', callback_data='distance_training_2km')
 distance_training_3km = types.InlineKeyboardButton(text='3 км.', callback_data='distance_training_3km')
-distance_training_4km = types.InlineKeyboardButton(text='4 км.', callback_data='distance_training_4km')
 distance_training_5km = types.InlineKeyboardButton(text='5 км.', callback_data='distance_training_5km')
+distance_training_10km = types.InlineKeyboardButton(text='10 км.', callback_data='distance_training_10km')
 distance_training_keyboard.row(distance_training_400m, distance_training_500m, distance_training_600m,
                                distance_training_800m)
 distance_training_keyboard.row(distance_training_1000m, distance_training_1200m, distance_training_1500m,
                                distance_training_1600m)
-distance_training_keyboard.row(distance_training_2km, distance_training_3km, distance_training_4km,
-                               distance_training_5km)
+distance_training_keyboard.row(distance_training_2km, distance_training_3km, distance_training_5km,
+                               distance_training_10km)
 
 # кнопки для новостной рассылки администратором
 first_news_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True, one_time_keyboard=True)

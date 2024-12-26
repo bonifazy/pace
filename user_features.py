@@ -1,10 +1,10 @@
 class Chart:
-    def __init__(self, pace: int = 0, total_time: int = 0, distance: int = 0):
+    def __init__(self, pace: int = 0, total_time: int = 0, total_distance: int = 0):
         """
         Takes pace in sec per 1km.
         """
         self.__time = total_time
-        self.__distance = distance
+        self.__distance = total_distance
         self.__pace = round(self.__time / self.__distance * 1000) if self.__time != 0 and self.__distance != 0 else pace
         self.correct_pace = True if 129 < self.__pace < 600 else False
 
@@ -117,11 +117,11 @@ class Chart:
         if self.__distance == 3000:
             for lap in (4, 8, 10, 12, 15, 16, 20, 24, 30):
                 result += f'{lap * 100} м: {self._target_time(lap * 0.1)} \n'
-        if self.__distance == 4000:
-            for lap in (4, 8, 10, 15, 20, 25, 30, 35, 40):
-                result += f'{lap * 100} м: {self._target_time(lap * 0.1)} \n'
         if self.__distance == 5000:
             for lap in (4, 8, 10, 15, 20, 25, 30, 35, 40, 45, 50):
+                result += f'{lap * 100} м: {self._target_time(lap * 0.1)} \n'
+        if self.__distance == 10000:
+            for lap in (4, 8, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100):
                 result += f'{lap * 100} м: {self._target_time(lap * 0.1)} \n'
         result += f'\nТемп: {self._target_time()}/ км.'
 
