@@ -9,12 +9,8 @@ import filters
 from db import Users
 
 
-warning_status = logging.WARNING
 logging.basicConfig(filename=BOT_LOG, level=logging.INFO, filemode='a', datefmt=LOG_DATEFMT, format=LOG_FORMAT)
 log = logging.getLogger('Bot')
-logging.getLogger('apscheduler.scheduler').setLevel(warning_status)
-logging.getLogger('apscheduler.executors.default').setLevel(warning_status)
-logging.getLogger('aiohttp.access').setLevel(warning_status)
 
 bot = Bot(token=TOKEN)
 redis_storage = RedisStorage2('127.0.0.1', 6379, db=0, prefix='my_pace_bot_fsm')

@@ -1,14 +1,13 @@
 from aiogram import types
 from aiogram.utils import exceptions
 from datetime import date
-import logging
 from asyncio import sleep
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
-from loader import dp, bot
+from loader import bot, dp, log
 from db import Users, get_log, get_users, get_ids
-from settings import BOT_LOG, TEST_GROUP
+from settings import TEST_GROUP
 from filters import IsAdminPersonal
 from buttons import first_news_keyboard, second_news_keyboard
 
@@ -18,14 +17,6 @@ class AdminState(StatesGroup):
     second_news = State()
     confirm_test = State()
     confirm_all = State()
-
-
-logging.basicConfig(filename=BOT_LOG,
-                    level=logging.INFO,
-                    filemode='a',
-                    datefmt='%Y-%m-%d, %H:%M',
-                    format='%(asctime)s: %(name)s: %(levelname)s: %(message)s')
-log = logging.getLogger('Bot')
 
 
 @dp.message_handler(IsAdminPersonal(), commands=['start'])

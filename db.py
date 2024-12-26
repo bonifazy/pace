@@ -1,14 +1,6 @@
 import sqlite3
-import logging
 
 from settings import DB_FILE, BOT_LOG
-
-logging.basicConfig(filename=BOT_LOG,
-                    level=logging.INFO,
-                    filemode='a',
-                    datefmt='%Y-%m-%d, %H:%M',
-                    format='%(asctime)s: %(name)s: %(levelname)s: %(message)s')
-log = logging.getLogger('database')
 
 
 class Users:

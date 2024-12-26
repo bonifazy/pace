@@ -2,37 +2,19 @@ from aiogram.types import CallbackQuery, Message, User
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from datetime import date
-import logging
 from typing import Optional
 
-from loader import dp, bot
+from loader import bot, dp, log
 from db import Users
-from settings import BOT_LOG
 from filters import IsUserPersonal
 from message import MESSAGE
 from user_features import Chart
 from buttons import digital_keyboard, next_step_keyboard, competitions_keyboard, distance_training_keyboard
 
 
-logging.basicConfig(filename=BOT_LOG,
-                    level=logging.INFO,
-                    filemode='a',
-                    datefmt='%Y-%m-%d, %H:%M',
-                    format='%(asctime)s: %(name)s: %(levelname)s: %(message)s')
-log = logging.getLogger('Bot')
-
-
 class Pace(StatesGroup):
     wait_pace = State()
     wait_time = State()
-    first_digit = State()
-    second_digit = State()
-    third_digit = State()
-    interval = State()
-    tempo = State()
-    long = State()
-    competitions = State()
-    distance_training = State()
 
 
 def update_db(from_user: User):

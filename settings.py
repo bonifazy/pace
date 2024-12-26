@@ -9,7 +9,7 @@ DEBUG = data.get('DEBUG', True)
 
 # Основные настройки логгера
 BOT_LOG = data.get('BOT_LOG', '')
-LOG_FORMAT = '%(asctime)s: %(name)20s: %(funcName)20s: %(levelname)7s: %(message)s'
+LOG_FORMAT = '%(asctime)s: %(name)10s: %(funcName)20s: %(levelname)7s: %(message)s'
 LOG_DATEFMT = '%d.%m, %H:%M:%S'
 
 # Настройки для aiogram.Dispatcher
