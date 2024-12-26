@@ -285,8 +285,6 @@ async def callback_time_from_inline_keyboard(call: CallbackQuery, state: FSMCont
         third_digit = data.get('third_digit')
         total_distance = data.get('total_distance')
 
-        print(total_distance)
-
     if first_digit is None:
         if digit in (0, 1, 2, 3, 4, 5, 6):
             await state.update_data(first_digit=digit)
